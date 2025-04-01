@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from os import getenv
 from typing import Dict, Optional
-from urllib.parse import urlencode
+from urllib.parse import quote, urlencode
 
 from pymongo import MongoClient
 from pymongo.collection import Collection
@@ -27,7 +27,7 @@ class MongoDbConnectionConf:
         self.password: str = password or self.__get_default_env("MONGO_DB_PASSWORD")
         self.dns: str = host or self.__get_default_env("MONGO_DB_DNS")
         self.connection_options: dict = {
-            "readPreference": "secondaryPreferred",
+            "readPreference": "primaryPreferred",
             "retryWrites": "true",
             "w": "majority",
         }
@@ -53,11 +53,12 @@ class MongoDbConnectionConf:
         :return: The DB's URI
         :rtype: str
         """
-        return (
-            f"{self.protocol}://{self.user}:{self.password}"
+        uri: str = (
+            f"{self.protocol}://{self.user}:{quote(self.password)}"
             f"@{self.dns}/{self.database}"
             f"?{urlencode(self.connection_options)}"
         )
+        return uri
 
 
 class MongoDbManager:
