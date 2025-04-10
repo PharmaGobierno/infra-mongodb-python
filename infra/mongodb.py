@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from json import loads
 from os import getenv
 from typing import Dict, Optional
 from urllib.parse import quote, urlencode
@@ -19,20 +20,28 @@ class MongoDbConnectionConf:
         password: Optional[str] = None,
         host: Optional[str] = None,
         database: Optional[str] = None,
-        connection_string: Optional[Dict[str, str]] = None,
+        connection_options: Optional[Dict[str, str]] = None,
     ) -> None:
         self.database: str = database or self.__get_default_env("MONGO_DB_NAME")
         self.protocol: str = protocol or self.__get_default_env("MONGO_DB_PROTOCOL")
         self.user: str = user or self.__get_default_env("MONGO_DB_USER")
         self.password: str = password or self.__get_default_env("MONGO_DB_PASSWORD")
         self.dns: str = host or self.__get_default_env("MONGO_DB_DNS")
+        self.__set_connection_options(connection_options)
+
+    def __set_connection_options(
+        self, connection_options: Optional[Dict[str, str]] = None
+    ):
         self.connection_options: dict = {
             "readPreference": "primaryPreferred",
             "retryWrites": "true",
             "w": "majority",
         }
-        if connection_string:
-            self.connection_options.update(connection_string)
+        _json_string = getenv("MONGO_DB_CONNECTION_STRING_JSON", "{}")
+        _env_connection_options = loads(_json_string)
+        self.connection_options.update(_env_connection_options)
+        if connection_options:
+            self.connection_options.update(connection_options)
 
     def __get_default_env(self, name: str) -> str:
         """
