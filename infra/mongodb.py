@@ -3,7 +3,7 @@ from __future__ import annotations
 from json import loads
 from os import getenv
 from typing import Dict, Optional
-from urllib.parse import quote, urlencode
+from urllib.parse import quote_plus, urlencode
 
 from pymongo import MongoClient
 from pymongo.collection import Collection
@@ -34,7 +34,8 @@ class MongoDbConnectionConf:
     ):
         self.connection_options: dict = {
             "readPreference": "primaryPreferred",
-            "retryWrites": "true",
+            "retryWrites": "true",  # Default already true in pymongo 4.x
+            "retryReads": "true",  # Default already true in pymongo 4.x
             "w": "majority",
         }
         _json_string = getenv("MONGO_DB_CONNECTION_STRING_JSON", "{}")
@@ -63,7 +64,7 @@ class MongoDbConnectionConf:
         :rtype: str
         """
         uri: str = (
-            f"{self.protocol}://{self.user}:{quote(self.password)}"
+            f"{self.protocol}://{quote_plus(self.user)}:{quote_plus(self.password)}"
             f"@{self.dns}/{self.database}"
             f"?{urlencode(self.connection_options)}"
         )
